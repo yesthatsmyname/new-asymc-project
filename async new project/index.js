@@ -1,4 +1,5 @@
 const style = document.createElement("style");
+
 style.textContent = `
     body {
         margin: 0;
@@ -33,7 +34,31 @@ style.textContent = `
         font-size: 14px;
         color: #888;
     }
+
+    .comments {
+        margin-top: 15px;
+        padding-top: 10px;
+        border-top: 1px solid #ddd;
+    }
+
+    .comment {
+        background: #f9f9f9;
+        padding: 8px;
+        border-radius: 6px;
+        margin-top: 8px;
+    }
+
+    .comment-name {
+        font-weight: bold;
+        font-size: 14px;
+    }
+
+    .comment-body {
+        font-size: 14px;
+        margin-top: 5px;
+    }
 `;
+
 document.head.appendChild(style);
 
 const header = document.createElement("header");
@@ -47,46 +72,85 @@ const limitInput = document.getElementById("limitPosts");
 
 let allPosts = [];
 let allUsers = [];
+let allComments = [];
 
+// FETCH POSTS
 async function getPosts() {
-    let res = await fetch('https://jsonplaceholder.typicode.com/posts');
+    const res = await fetch('https://jsonplaceholder.typicode.com/posts');
     return await res.json();
 }
 
+// FETCH USERS
 async function getUsers() {
-    let res = await fetch('https://jsonplaceholder.typicode.com/users');
+    const res = await fetch('https://jsonplaceholder.typicode.com/users');
     return await res.json();
 }
 
+// FETCH COMMENTS
+async function getComments() {
+    const res = await fetch('https://jsonplaceholder.typicode.com/comments');
+    return await res.json();
+}
+
+// FIND USER
 function getUserByID(users, id) {
     return users.find(user => user.id == id);
 }
 
+// GET COMMENTS FOR POST
+function getCommentsByPostId(postId) {
+    return allComments.filter(comment => comment.postId == postId);
+}
+
+// RENDER POSTS
 function renderPosts(posts) {
     postsContainer.innerHTML = "";
 
     const limit = limitInput?.value || posts.length;
 
     posts.slice(0, limit).forEach(post => {
+
         const postElement = document.createElement("div");
         postElement.classList.add("post");
 
         const user = getUserByID(allUsers, post.userId);
 
+        const comments = getCommentsByPostId(post.id);
+
+        // CREATE COMMENTS HTML
+        const commentsHTML = comments.slice(0, 3).map(comment => `
+            <div class="comment">
+                <div class="comment-name">${comment.name}</div>
+                <div class="comment-body">${comment.body}</div>
+            </div>
+        `).join("");
+
         postElement.innerHTML = `
             <h3>${post.title}</h3>
+
             <p>${post.body}</p>
-            <div class="author">Author: ${user.name}</div>
+
+            <div class="author">
+                Author: ${user.name}
+            </div>
+
+            <div class="comments">
+                <h4>Comments</h4>
+                ${commentsHTML}
+            </div>
         `;
 
         postsContainer.appendChild(postElement);
     });
 }
 
+// SEARCH
 function handleSearch() {
+
     const query = searchInput.value.toLowerCase();
 
     const filteredPosts = allPosts.filter(post => {
+
         const user = getUserByID(allUsers, post.userId);
 
         return (
@@ -99,34 +163,21 @@ function handleSearch() {
     renderPosts(filteredPosts);
 }
 
+// EVENTS
 searchBtn.addEventListener("click", handleSearch);
+
 searchInput.addEventListener("input", handleSearch);
+
 limitInput?.addEventListener("input", handleSearch);
 
+// LOAD EVERYTHING
 window.onload = async () => {
+
     allPosts = await getPosts();
+
     allUsers = await getUsers();
+
+    allComments = await getComments();
 
     renderPosts(allPosts);
 };
-async function getComments() {
-  try {
-    const response = await fetch('https://jsonplaceholder.typicode.com/comments');
-    const data = await response.json();
-
-    const comments = data.map(({ postId, id, name, body }) => ({
-      postId,
-      id,
-      name,
-      body
-    }));
-
-    console.log(comments);
-
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-getComments();
-// https://link.kitm.lt/BExsyu

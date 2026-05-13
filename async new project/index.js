@@ -109,5 +109,24 @@ window.onload = async () => {
 
     renderPosts(allPosts);
 };
+async function getComments() {
+  try {
+    const response = await fetch('https://jsonplaceholder.typicode.com/comments');
+    const data = await response.json();
 
+    const comments = data.map(({ postId, id, name, body }) => ({
+      postId,
+      id,
+      name,
+      body
+    }));
+
+    console.log(comments);
+
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+getComments();
 // https://link.kitm.lt/BExsyu
